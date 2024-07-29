@@ -1,0 +1,57 @@
+Package: simup1
+Title: An R Package for Simulating Phase I Clinical Trials
+Version: 4.0
+Authors@R:
+    person(given = "Chenguang",
+           family = "Wang",
+           role = c("aut", "cre"),
+           email = "chenguang.wang.0517@gmail.com")
+Maintainer: Chenguang Wang <chenguang.wang.0517@gmail.com>
+Description: A simulation toolbox R package
+License: GPL (>=3)
+Depends:
+    R (>= 4.0),
+    methods,
+    dplyr (>= 1.0),
+    rpact (>= 3.2),
+    ggplot2 (>= 3.3.5),
+    data.table (>= 1.14),
+    tidyr (>= 1.1)
+Imports:
+    methods,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.3.1.1)
+LinkingTo:
+    BH (>= 1.72.0),
+    Rcpp (>= 1.0.5),
+    RcppEigen (>= 0.3.3.7.0),
+    RcppParallel (>= 5.0.2),
+    rstan (>= 2.26.0),
+    StanHeaders (>= 2.26.0)
+Suggests:
+    knitr,
+    shiny,
+    rmarkdown,
+    pander,
+    xtable
+Encoding: UTF-8
+LazyData: true
+ByteCompile: true
+NeedsCompilation: yes
+SystemRequirements: GNU make
+RoxygenNote: 7.2.3
+VignetteBuilder: knitr
+Collate:
+    'RcppExports.R'
+    'stanmodels.R'
+    'stb_class_generic.R'
+    'stb_class_phase1.R'
+    'stb_dsgn_fix.R'
+    'stb_dsgn_phasei.R'
+    'stb_tls_enroll.R'
+    'stb_tls_phasei.R'
+    'stb_tls_stan_shiny.R'
+    'zzz_package.R'
+    'zzz_toolkit.R'
