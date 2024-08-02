@@ -4,7 +4,7 @@
 \alias{stb_create_design}
 \title{Create a Study Design}
 \usage{
-stb_create_design(type = c("dose_fix", "dose_p1"))
+stb_create_design(type = c("dose_fix", "dose_3p3", "dose_acctit"))
 }
 \description{
 Create a Study Design

@@ -17,52 +17,6 @@ tl_merge_lists <- function(lst_to, lst_from) {
 }
 
 
-#' Draw sample size for each arm
-#'
-#' @param sample_size total sample size
-#' @param ratio_by_arm randomization ratio by arm
-#' @param fixed Fixed ratio or multinomial ratio
-#' @param seed Random seed
-#'
-#' @export
-#'
-tl_draw_arm_size <- function(sample_size,
-                             ratio_by_arm,
-                             fixed = TRUE,
-                             seed = NULL) {
-
-    if (fixed) {
-        n_by_arm <- sample_size
-        n_by_arm <- n_by_arm * ratio_by_arm / sum(ratio_by_arm)
-        n_by_arm <- floor(n_by_arm)
-    } else {
-        if (!is.null(seed))
-            old_seed <- set.seed(seed)
-
-        n_by_arm <- rmultinom(1, sample_size, ratio_by_arm)
-
-        if (!is.null(seed))
-            set.seed(old_seed)
-
-    }
-
-    n_by_arm
-}
-
-#'  Log-Normal mean and variance
-#'
-#'
-#' @export
-#'
-tl_lognorm_par <- function(norm_mu, norm_sigma) {
-    mu     <- exp(norm_mu + norm_sigma^2 / 2)
-    sigma2 <- exp(norm_sigma^2) - 1
-    sigma2 <- sigma2 * exp(2 * norm_mu + norm_sigma^2)
-
-    list(mean = mu, sd = sqrt(sigma2))
-}
-
-
 #' Get X Beta by formula
 #'
 #'

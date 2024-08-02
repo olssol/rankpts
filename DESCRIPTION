@@ -1,6 +1,6 @@
 Package: simup1
 Title: An R Package for Simulating Phase I Clinical Trials
-Version: 4.0
+Version: 4.2
 Authors@R:
     person(given = "Chenguang",
            family = "Wang",

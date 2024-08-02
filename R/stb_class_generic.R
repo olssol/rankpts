@@ -12,7 +12,7 @@
 
 
 ## -----------------------------------------------------------------------------
-##                  class stb_design and class stb_dist
+##                  class stb_design
 ## -----------------------------------------------------------------------------
 
 setGeneric("stb_describe",
@@ -33,8 +33,17 @@ setGeneric("stb_plot_design",
 setGeneric("stb_generate_data",
            function(x, ...) standardGeneric("stb_generate_data"))
 
+setGeneric("stb_generate_cohort",
+           function(x, dose, data, ...) standardGeneric("stb_generate_cohort"))
+
+setGeneric("stb_escalation",
+           function(x, dose, data, ...) standardGeneric("stb_escalation"))
+
+setGeneric("stb_recommend",
+           function(x, data, ...) standardGeneric("stb_recommend"))
+
 setGeneric("stb_analyze_data",
-           function(x, data_ana, ...) standardGeneric("stb_analyze_data"))
+           function(x, data, ...) standardGeneric("stb_analyze_data"))
 
 setGeneric("stb_plot_data",
            function(x, data, ...) standardGeneric("stb_plot_data"))
@@ -104,21 +113,6 @@ setGeneric("stb_get_simu_seed",
            function(x) standardGeneric("stb_get_simu_seed"))
 
 
-## -----------------------------------------------------------------------------
-##                        class stb_dist
-## -----------------------------------------------------------------------------
-
-setGeneric("stb_set_para_by_qs",
-           function(x, target_qs, ...) standardGeneric("stb_set_para_by_qs"))
-
-setGeneric("stb_set_para_by_qs_ind",
-           function(x, target_qs, ...)
-               standardGeneric("stb_set_para_by_qs_ind"))
-
-setGeneric("stb_dist_get_qs",
-           function(x, qs) standardGeneric("stb_dist_get_qs"))
-
-
 
 ## -----------------------------------------------------------------------------
 ##                        overall class stb_design
@@ -182,17 +176,30 @@ setMethod("stb_generate_data",
 #'
 #' @export
 #'
-setMethod("stb_create_analysis_set",
+setMethod("stb_generate_cohort",
           "STB_DESIGN",
-          function(x, data, ...) list(data))
+          function(x, dose, data, ...) NULL)
 
+#'
+#' @export
+#'
+setMethod("stb_escalation",
+          "STB_DESIGN",
+          function(x, dose, data, ...) NULL)
+
+#'
+#' @export
+#'
+setMethod("stb_recommend",
+          "STB_DESIGN",
+          function(x, data, ...) NULL)
 
 #'
 #' @export
 #'
 setMethod("stb_analyze_data",
           "STB_DESIGN",
-          function(x, data_ana, ...) list())
+          function(x, data, ...) list())
 
 #'
 #' @export
@@ -201,37 +208,85 @@ setMethod("stb_create_trial",
           "STB_DESIGN",
           function(x, seed = NULL, ...) {
 
-              if (!is.null(seed))
-                  old_seed <- set.seed(seed)
+    if (!is.null(seed))
+        old_seed <- set.seed(seed)
 
-              data     <- stb_generate_data(x, ...)
-              data_ana <- stb_create_analysis_set(x, data, ...)
-              result   <- stb_analyze_data(x, data_ana, ...)
+    next_dose <- 1
+    data      <- NULL
+    inx       <- 1
+    while (next_dose > -1) {
+        dose      <- next_dose
+        data      <- stb_generate_cohort(x, dose, data, inx, ...)
+        next_dose <- stb_escalation(x, dose, data, ...)
+        inx       <- inx + 1
+    }
 
-              if (!is.null(seed))
-                  set.seed(old_seed)
+    result                    <- stb_analyze_data(x, data, ...)
+    result$by_study$recommend <- stb_recommend(x, data)
 
-              new("STB_TRIAL",
-                  design    = x,
-                  data      = data,
-                  data_ana  = data_ana,
-                  result    = result,
-                  seed      = seed)
-          })
+    if (!is.null(seed))
+        set.seed(old_seed)
+
+    new("STB_TRIAL",
+        design    = x,
+        data      = data,
+        result    = result,
+        seed      = seed)
+})
 
 #'
 #' @export
 #'
 setMethod("stb_simu_gen_raw",
           "STB_DESIGN",
-          function(x, lst, ...) lst)
+          function(x, lst, ...) {
+
+    by_dose  <- list()
+    by_study <- list()
+
+    for (i in seq_len(length(lst))) {
+        cur_rst       <- lst[[i]]
+        by_dose[[i]]  <- cur_rst$by_dose %>% mutate(rep = i)
+        by_study[[i]] <- cur_rst$by_study %>% mutate(rep = i)
+    }
+
+    list(by_dose  = rbindlist(by_dose),
+         by_study = rbindlist(by_study))
+})
 
 #'
 #' @export
 #'
 setMethod("stb_simu_gen_summary",
           "STB_DESIGN",
-          function(x, lst, ...) list())
+          function(x, lst, ...) {
+
+    ## by dose
+    by_dose <- lst$by_dose %>%
+        group_by(dose) %>%
+        summarize(n_tot = mean(n_tot),
+                  n_tox = mean(n_tox),
+                  n_res = mean(n_res))
+
+    ## by study
+    by_study <- lst$by_study %>%
+        summarize(n_tot    = mean(n_tot),
+                  n_tox    = mean(n_tox),
+                  n_res    = mean(n_res),
+                  duration = mean(duration),
+                  n_dose   = mean(n_dose),
+                  n_cohort = mean(n_cohort))
+
+    ## recommend
+    dose_recommend <- lst$by_study %>%
+        group_by(recommend) %>%
+        summarize(freq = n()) %>%
+        mutate(freq = freq / sum(freq))
+
+    list(by_dose        = by_dose,
+         by_study       = by_study,
+         dose_recommend = dose_recommend)
+})
 
 #'
 #' @export
@@ -249,7 +304,8 @@ setMethod("stb_create_simustudy",
           function(x,
                    n_rep    = 5,
                    n_core   = 5,
-                   seed     = NULL, ...,
+                   seed     = NULL,
+                   ...,
                    save_raw = FALSE) {
 
               if (0 == x@design_valid) {
@@ -285,7 +341,6 @@ setMethod("stb_create_simustudy",
               ## summarize
               rst_raw     <- stb_simu_gen_raw(x, rst)
               rst_summary <- stb_simu_gen_summary(x, rst_raw, ...)
-              rst_key     <- stb_simu_gen_key(x, rst_summary)
 
               ## seed
               if (!is.null(seed))
@@ -300,7 +355,6 @@ setMethod("stb_create_simustudy",
                   n_core      = n_core,
                   rst_raw     = rst_raw,
                   rst_summary = rst_summary,
-                  rst_key     = rst_key,
                   seed        = seed)
           })
 
@@ -316,11 +370,9 @@ setMethod("stb_create_simustudy",
 setClass("STB_TRIAL",
          slots = list(design      = "STB_DESIGN",
                       data        = "data.frame",
-                      data_ana    = "list",
                       result      = "list",
                       seed        = "numeric"),
          prototype = prototype(seed     = NULL,
-                               data_ana = NULL,
                                result   = NULL))
 
 #'
@@ -342,11 +394,6 @@ setMethod("stb_get_trial_design", "STB_TRIAL", function(x) x@design)
 #' @export
 #'
 setMethod("stb_get_trial_seed",   "STB_TRIAL", function(x) x@seed)
-
-#'
-## setMethod("stb_create_analysis_set", "STB_TRIAL", function(x, ...) {
-##     stb_create_analysis_set(x@design, x@data, ...)
-## })
 
 
 #'
@@ -419,15 +466,16 @@ setMethod("stb_get_simu_seed",     "STB_SIMU_STUDY", function(x) x@seed)
 #' @export
 #'
 stb_create_design <- function(type = c("dose_fix",
-                                       "dose_p1")) {
+                                       "dose_3p3",
+                                       "dose_acctit",
+                                       "dose_acc2")) {
 
     type <- match.arg(type)
     rst  <- switch(type,
-                   ## s1
-                   ## p1
-                   dose_fix       = new("STB_DESIGN_DOSE_FIX"),
-                   ## p2
-                   dose_p1        = new("STB_DESIGN_DOSE_P1"),
+                   dose_fix    = new("STB_DESIGN_DOSE_FIX"),
+                   dose_3p3    = new("STB_DESIGN_P1_3P3"),
+                   dose_acctit = new("STB_DESIGN_P1_ACCTIT"),
+                   dose_acc2   = new("STB_DESIGN_P1_ACC2"),
                    new("STB_DESIGN"))
 
     rst
