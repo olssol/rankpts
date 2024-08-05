@@ -119,25 +119,26 @@ stb_tl_p1_sce <- function(tox = c(0.05, 0.05, 0.08),
 #'
 #' @export
 #'
-stb_tl_p1_simu_cohort <- function(cur_n, cur_prob, inx = 1,
+stb_tl_p1_simu_cohort <- function(cur_n, cur_prob,
                                   par_enroll,
-                                  enroll_shift = 0, dlt_days = 28, ...) {
+                                  enroll_shift = 0,
+                                  dlt_days = 28, ...) {
 
+    ## enrollment
     data_enroll  <- stb_tl_simu_enroll_cohort(
         n_pt       = cur_n,
         par_enroll = par_enroll,
         date_bos   = enroll_shift,
         ...)
 
-    data_enroll <- data_enroll %>%
-        mutate(date_dlt = date_enroll + dlt_days)
-
     ## tox and response
     cur_tox  <- rmultinom(cur_n, 1, cur_prob)
     data_tox <- data.frame(t(cur_tox)) %>%
         mutate(tox      = TR10 + TR11,
-               response = TR01 + TR11,
-               cohort   = inx)
+               response = TR01 + TR11)
+    data_tox$date_dlt <- data_enroll$date_enroll + dlt_days
 
-    cbind(data_enroll, data_tox)
+    ## return
+    list(data_enroll = data_enroll,
+         data_tox    = data_tox)
 }

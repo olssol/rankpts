@@ -57,9 +57,9 @@ stb_stan <- function(lst_data,
 #'
 #' @export
 #'
-stb_shiny <- function(appname = "bayes2", pkgname = "simutb") {
+stb_shiny <- function(appname = "phase1", pkgname = "simup1") {
 
-    req_pkgs        <- c("shiny", "DT")
+    req_pkgs        <- c("shiny", "DT", "bsicons", "bslib")
     chk_uninstalled <- sapply(req_pkgs,
                               function(x) {
                                   !requireNamespace(x,
@@ -84,7 +84,7 @@ stb_shiny <- function(appname = "bayes2", pkgname = "simutb") {
         stop(msg, call. = FALSE)
     }
 
-    app_dir <- system.file(appname, package = "simutb")
+    app_dir <- system.file(appname, package = pkgname)
     if (app_dir == "") {
         stop("Could not find Shiny directory. Try re-installing `simutb`.",
              call. = FALSE)

@@ -7,7 +7,6 @@
 stb_tl_p1_simu_cohort(
   cur_n,
   cur_prob,
-  inx = 1,
   par_enroll,
   enroll_shift = 0,
   dlt_days = 28,

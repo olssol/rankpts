@@ -4,7 +4,7 @@
 \alias{stb_shiny}
 \title{Run Web-Based application}
 \usage{
-stb_shiny(appname = "bayes2", pkgname = "simutb")
+stb_shiny(appname = "phase1", pkgname = "simup1")
 }
 \description{
 Call Shiny to run \code{statidea} as a web-based application.

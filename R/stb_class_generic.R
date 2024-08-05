@@ -45,8 +45,8 @@ setGeneric("stb_recommend",
 setGeneric("stb_analyze_data",
            function(x, data, ...) standardGeneric("stb_analyze_data"))
 
-setGeneric("stb_plot_data",
-           function(x, data, ...) standardGeneric("stb_plot_data"))
+setGeneric("stb_plot_design",
+           function(x, data, ...) standardGeneric("stb_plot_design"))
 
 setGeneric("stb_create_trial",
            function(x, ...) standardGeneric("stb_create_trial"))
@@ -86,8 +86,8 @@ setGeneric("stb_get_trial_seed",
 setGeneric("stb_get_trial_design",
            function(x) standardGeneric("stb_get_trial_design"))
 
-setGeneric("stb_trial_plot",
-           function(x, ...) standardGeneric("stb_trial_plot"))
+setGeneric("stb_plot_trial",
+           function(x, ...) standardGeneric("stb_plot_trial"))
 
 
 ## -----------------------------------------------------------------------------
@@ -163,6 +163,13 @@ setMethod("stb_para<-",
 #' @export
 #'
 setMethod("stb_describe",
+          "STB_DESIGN",
+          function(x, ...) NULL)
+
+#'
+#' @export
+#'
+setMethod("stb_plot_design",
           "STB_DESIGN",
           function(x, ...) NULL)
 
@@ -261,12 +268,17 @@ setMethod("stb_simu_gen_summary",
           "STB_DESIGN",
           function(x, lst, ...) {
 
+    n_dose <- x@design_para$n_dose
+
     ## by dose
     by_dose <- lst$by_dose %>%
+        mutate(dose = factor(dose, levels = 1:n_dose)) %>%
         group_by(dose) %>%
         summarize(n_tot = mean(n_tot),
                   n_tox = mean(n_tox),
-                  n_res = mean(n_res))
+                  n_res = mean(n_res)) %>%
+        complete(dose,
+                 fill = list(n_tot = 0, n_tox = 0, n_res = 0))
 
     ## by study
     by_study <- lst$by_study %>%
@@ -278,10 +290,16 @@ setMethod("stb_simu_gen_summary",
                   n_cohort = mean(n_cohort))
 
     ## recommend
+    levels_rec <- seq_len(n_dose)
     dose_recommend <- lst$by_study %>%
+        mutate(recommend = factor(
+                   recommend,
+                   levels = levels_rec)) %>%
         group_by(recommend) %>%
         summarize(freq = n()) %>%
-        mutate(freq = freq / sum(freq))
+        mutate(freq = freq / sum(freq)) %>%
+        complete(recommend,
+                 fill = list(freq = 0))
 
     list(by_dose        = by_dose,
          by_study       = by_study,
@@ -325,7 +343,7 @@ setMethod("stb_create_simustudy",
                   parallel::mclapply(
                                 seq_len(n_rep),
                                 function(k) {
-                                    if (0 == k %% 5)
+                                    if (0 == k %% 100)
                                         print(k)
 
                                     cur_trial <-
@@ -399,7 +417,7 @@ setMethod("stb_get_trial_seed",   "STB_TRIAL", function(x) x@seed)
 #'
 #' @export
 #'
-setMethod("stb_trial_plot",
+setMethod("stb_plot_trial",
           "STB_TRIAL",
           function(x, ...) {
               stb_plot_data(x@design, x@data, ...)

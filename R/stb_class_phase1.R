@@ -35,6 +35,28 @@ setMethod("stb_set_default_para",
               internal_desp1_dpara()
           })
 
+setMethod("stb_plot_design",
+           "STB_DESIGN_P1",
+          function(x, reference = 0.3, ...) {
+
+    tox <- x@design_para$tox_rate
+    dta <- data.frame(Dose = seq_len(length(tox)),
+                      Tox  = tox)
+
+    rst <- ggplot(data = dta, aes(x = Dose, y = Tox)) +
+        geom_line() +
+        geom_point() +
+        theme_bw() +
+        labs(y = "Toxicity Rate") +
+        scale_y_continuous(limits = c(0, 1))
+
+    if (!is.null(reference))
+        rst <- rst + geom_hline(yintercept = reference, lty = 2)
+
+    rst
+})
+
+
 setMethod("stb_para<-",
           "STB_DESIGN_P1",
           function(x, value) {
@@ -47,13 +69,18 @@ setMethod("stb_para<-",
 setMethod("stb_generate_cohort",
           "STB_DESIGN_P1",
           function(x, dose, data, inx, ...) {
-    desp1_generate_cohort(x@design_para, dose, data, inx, ...)
+
+    cur_cohort <- desp1_generate_cohort_flex(x@design_para,
+                                             dose,
+                                             data, ...) %>%
+        mutate(cohort = inx)
+
+    rbind(data, cur_cohort)
 })
 
 setMethod("stb_analyze_data",
           "STB_DESIGN_P1",
           function(x, data, ...) {
-
     desp1_summarize(data, x@design_para$n_dose)
 })
 
@@ -125,29 +152,18 @@ setMethod("stb_describe",
 
     cat("Type: \n")
     cat("    The accelerated titration design derived from the 3+3 design \n\n")
-    desp1_describe(x, ...)
-    cat("    acc_max_dose:  maximum number of doses for titration \n")
-    cat("                   (default 3)\n")
+    callNextMethod(x, ...)
 })
 
 setMethod("stb_set_default_para",
           "STB_DESIGN_P1_ACCTIT",
-          function(x) {
-    rst              <- internal_desp1_dpara()
-    rst$acc_max_dose <- 3
+          function(x, ...) {
+    rst <- callNextMethod(x, ...)
+    rst$n_reuse_regular <- 3
+    rst$size_cohort_acc <- 1
+    rst$n_reuse_acc     <- 1
     rst
 })
-
-setMethod("stb_generate_cohort",
-          "STB_DESIGN_P1_ACCTIT",
-          function(x, dose, data, inx, ...) {
-
-    acctit_generate_cohort(x@design_para,
-                           dose,
-                           data,
-                           inx, ...)
-})
-
 
 ## next dose = -1: stop the trial
 setMethod("stb_escalation",
@@ -159,6 +175,10 @@ setMethod("stb_escalation",
                                    cur_dose = dose)
     return(next_dose)
 })
+
+## -----------------------------------------------------------------------------
+##                     Accelerated Titration
+## -----------------------------------------------------------------------------
 
 
 ## -----------------------------------------------------------------------------
