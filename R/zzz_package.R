@@ -19,7 +19,5 @@
 #' @importFrom tidyr gather
 #' @importFrom data.table rbindlist
 #'
-#' @importFrom mvtnorm rmvnorm pmvnorm dmvnorm
-#' @importFrom scales percent
 #'
 NULL
