@@ -18,15 +18,8 @@
 #'     rename filter select arrange ungroup n distinct left_join if_else rowwise
 #' @importFrom tidyr gather
 #' @importFrom data.table rbindlist
-#' @importFrom survival Surv survfit coxph survdiff
-#'
-#' @importFrom rpact getDesignGroupSequential
-#' @importFrom gsDesign gsDesign gsBoundSummary sfPower sfPoints
 #'
 #' @importFrom mvtnorm rmvnorm pmvnorm dmvnorm
-#' @importFrom survminer ggsurvplot ggsurvplot_facet
-#' @importFrom mmrm mmrm df_1d
-#' @importFrom brms brm as_draws_matrix
 #' @importFrom scales percent
 #'
 NULL
