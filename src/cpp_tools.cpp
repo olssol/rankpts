@@ -22,3 +22,313 @@ void my_package_init(DllInfo *dll) {
 double c_test(double test) {
   return pow(test,2);
 }
+
+// Get utility value by survival function
+//
+// @export
+//
+// [[Rcpp::export]]
+NumericMatrix c_two_arm_diff(NumericMatrix dat) {
+
+  int           i, nt = 0, nc = 0, n = dat.nrow();
+  double        st = 0, sc = 0, my;
+  NumericMatrix rst(n, 6);
+
+  for (i = 0; i < n; i++) {
+    if (1 == dat(i, 0)) {
+      nt++;
+      st += dat(i, 1);
+      my = st / nt;
+    } else {
+      nc++;
+      sc += dat(i, 1);
+      my = sc / nc;
+    }
+
+    rst(i, 0) = i + 1;
+    rst(i, 1) = nt;
+    rst(i, 2) = st;
+    rst(i, 3) = nc;
+    rst(i, 4) = sc;
+    rst(i, 5) = my;
+  }
+
+
+  // return
+  return(rst);
+}
+
+//' Multiple testing following the graph
+//'
+//'
+//' @param p_values  vector of p-values for the elementary hypothesis
+//' @param log       TRUE: print log at each step; FALSE: silent
+//'
+//' @inheritParams c_mtp
+//'
+//' @return Hypothesis rejection status indicator vector
+//'
+//' @export
+// [[Rcpp::export]]
+IntegerVector c_mtp_single(NumericVector p_values, NumericVector alphas,
+                           NumericMatrix mat_g, bool log = false) {
+
+    NumericVector va = clone(alphas);
+    NumericMatrix mg = clone(mat_g);
+
+    int m = p_values.size();
+    IntegerVector h_ind(m, 1);
+    IntegerVector rst(m, 0);
+
+    int n_h = m, fstop = 0;
+    int i, j, l, k;
+    double j_pal, pal;
+
+    //testing algorithm
+    while (n_h > 0 & 0 == fstop) {
+        // print log
+        if (log) {
+            Rcout << "-------------------------- \n";
+            Rcout << "----Rejection status: \n";
+            Rf_PrintValue(rst);
+            Rcout << "----Alphas:   \n";
+            Rf_PrintValue(va);
+            Rcout << "----p-values: \n";
+            Rf_PrintValue(p_values);
+            Rcout << "----G-Matrix: \n";
+            Rf_PrintValue(mg);
+        }
+
+        // arg_min pval / alpha
+        j      = 0;
+        j_pal  = R_PosInf;
+        for (i = 0; i < m; i ++) {
+            if (0 == h_ind[i])
+                continue;
+            pal = p_values[i] / va[i];
+            if (pal < j_pal) {
+                j_pal = pal;
+                j     = i;
+            }
+        }
+
+        // test hypothesis j
+        if (p_values[j] > va[j]) {
+            fstop = 1;
+            continue;
+        }
+
+        // update tests
+        rst[j]   = 1;
+        h_ind[j] = 0;
+        n_h--;
+
+        if (0 == n_h)
+            continue;
+
+        // update alpha
+        for (i = 0; i < m; i ++) {
+            if (0 == h_ind[i])
+                continue;
+
+            va[i] += va[j] * mg(j, i);
+        }
+        va[j] = 0;
+
+        // update G
+        for (l = 0; l < m; l++) {
+            for (k = 0; k < m; k++) {
+                if (0 == h_ind[l] |
+                    0 == h_ind[k] |
+                    l == k)
+                    continue;
+
+                mg(l, k) += mg(j, k) * mg(l, j);
+                mg(l, k) /= 1 - mg(j, l) * mg(l, j);
+            }
+        }
+
+        for (l = 0; l < m; l++) {
+            for (k = 0; k < m; k++) {
+                if (0 == h_ind[l] |
+                    0 == h_ind[k] |
+                    l == k)
+                    mg(l, k) = 0.0;
+            }
+        }
+    }
+
+    // return
+    return(rst);
+}
+
+//' Multiple testing following the graph
+//'
+//' @param alphas    vector of the original alphas
+//' @param mat_g     transition matrix G
+//'
+//' @param p_values  matrix of p-values for the elementary hypothesis
+//'
+//' @return Hypothesis rejection status indicator vector
+//'
+//' @export
+// [[Rcpp::export]]
+IntegerMatrix c_mtp(NumericMatrix p_values, NumericVector alphas,
+                    NumericMatrix mat_g) {
+
+    int m = p_values.nrow();
+    int n = p_values.ncol();
+
+    IntegerMatrix rst(m, n);
+    std::fill(rst.begin(), rst.end(), 0);
+
+    int i;
+    for (i = 0; i < m; i++) {
+        rst(i, _) = c_mtp_single(p_values(i, _), alphas, mat_g);
+    }
+
+    // return
+    return(rst);
+}
+
+
+//' A single step in the multiple testing following the graph
+//'
+//'
+//'
+//' @return
+//'
+//' @export
+// [[Rcpp::export]]
+int c_mtp_step(NumericMatrix mat_g, NumericVector weights, IntegerVector h_ind,
+               NumericVector p_values, double alpha) {
+
+  int m = p_values.size();
+  int rst;
+
+  int i, j, l, k;
+  double j_pal, pal;
+
+
+  // arg_min pval / alpha
+  j      = 0;
+  j_pal  = R_PosInf;
+  for (i = 0; i < m; i ++) {
+    if (0 == h_ind[i])
+      continue;
+    pal = p_values[i] / (weights[i] * alpha);
+    if (pal < j_pal) {
+      j_pal = pal;
+      j     = i;
+    }
+  }
+  rst = j;
+
+  // test hypothesis j
+  if (p_values[j] > (weights[j] * alpha)) {
+    return(-1);
+  }
+
+  // update tests
+  h_ind[j] = 0;
+
+  // update alpha
+  for (i = 0; i < m; i ++) {
+    if (0 == h_ind[i])
+      continue;
+
+    weights[i] += weights[j] * mat_g(j, i);
+  }
+  weights[j] = 0;
+
+  // update G
+  for (l = 0; l < m; l++) {
+    for (k = 0; k < m; k++) {
+      if (0 == h_ind[l] |
+          0 == h_ind[k] |
+          l == k)
+        continue;
+
+      mat_g(l, k) += mat_g(j, k) * mat_g(l, j);
+      mat_g(l, k) /= 1 - mat_g(j, l) * mat_g(l, j);
+    }
+  }
+
+  for (l = 0; l < m; l++) {
+    for (k = 0; k < m; k++) {
+      if (0 == h_ind[l] |
+          0 == h_ind[k] |
+          l == k)
+        mat_g(l, k) = 0.0;
+    }
+  }
+
+  // return
+  return(rst);
+}
+
+//' Rank patients
+//'
+//' @export
+// [[Rcpp::export]]
+IntegerMatrix c_rank(NumericMatrix mat_data,
+                     NumericMatrix mat_miss,
+                     NumericVector vec_margin) {
+
+    int m = mat_data.nrow();
+    int n = mat_data.ncol();
+
+    IntegerMatrix rst(m, m);
+    std::fill(rst.begin(), rst.end(), 0);
+
+    int    i, j, k;
+    int    mis_i, mis_j;
+    double v_i, v_j, margin;
+    int    cur_rst;
+
+    for (i = 0; i < m-1; i++) {
+      for (j = i+1; j < m; j++) {
+        for (k = 0; k < n; k++) {
+
+          v_i     = mat_data(i, k);
+          v_j     = mat_data(j, k);
+          mis_i   = mat_miss(i, k);
+          mis_j   = mat_miss(j, k);
+          margin  = vec_margin[k];
+
+          // Rcout << i << "--" << j << "--" << k << std::endl;
+          // Rcout << v_i << "--" << v_j << std::endl;
+          // Rcout << mis_i << "--" << mis_j << std::endl;
+          // Rcout << "-------------------------------" << std::endl;
+
+          cur_rst = 0;
+          if (0 == mis_i && 0 == mis_j) {
+            if (v_i - v_j > margin) {
+              cur_rst = 1;
+            } else if (v_j - v_i > margin) {
+              cur_rst = -1;
+            } else {
+              cur_rst = 0;
+            }
+          } else if (1 == mis_i && 0 == mis_j) {
+            if (v_i - v_j > margin) {
+              cur_rst = 1;
+            }
+          } else if (0 == mis_i && 1 == mis_j) {
+            if (v_j - v_i > margin) {
+              cur_rst = -1;
+            }
+          }
+
+          if (cur_rst != 0)
+            break;
+        }
+
+        rst(i, j) = cur_rst;
+        rst(j, i) = -cur_rst;
+      }
+    }
+
+    // return
+    return(rst);
+}

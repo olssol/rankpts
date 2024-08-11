@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // c_test
 double c_test(double test);
-RcppExport SEXP _simup1_c_test(SEXP testSEXP) {
+RcppExport SEXP _rankpts_c_test(SEXP testSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,14 +22,85 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// c_two_arm_diff
+NumericMatrix c_two_arm_diff(NumericMatrix dat);
+RcppExport SEXP _rankpts_c_two_arm_diff(SEXP datSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dat(datSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_two_arm_diff(dat));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_mtp_single
+IntegerVector c_mtp_single(NumericVector p_values, NumericVector alphas, NumericMatrix mat_g, bool log);
+RcppExport SEXP _rankpts_c_mtp_single(SEXP p_valuesSEXP, SEXP alphasSEXP, SEXP mat_gSEXP, SEXP logSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type p_values(p_valuesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type alphas(alphasSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type mat_g(mat_gSEXP);
+    Rcpp::traits::input_parameter< bool >::type log(logSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_mtp_single(p_values, alphas, mat_g, log));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_mtp
+IntegerMatrix c_mtp(NumericMatrix p_values, NumericVector alphas, NumericMatrix mat_g);
+RcppExport SEXP _rankpts_c_mtp(SEXP p_valuesSEXP, SEXP alphasSEXP, SEXP mat_gSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type p_values(p_valuesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type alphas(alphasSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type mat_g(mat_gSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_mtp(p_values, alphas, mat_g));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_mtp_step
+int c_mtp_step(NumericMatrix mat_g, NumericVector weights, IntegerVector h_ind, NumericVector p_values, double alpha);
+RcppExport SEXP _rankpts_c_mtp_step(SEXP mat_gSEXP, SEXP weightsSEXP, SEXP h_indSEXP, SEXP p_valuesSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type mat_g(mat_gSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type h_ind(h_indSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type p_values(p_valuesSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_mtp_step(mat_g, weights, h_ind, p_values, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_rank
+IntegerMatrix c_rank(NumericMatrix mat_data, NumericMatrix mat_miss, NumericVector vec_margin);
+RcppExport SEXP _rankpts_c_rank(SEXP mat_dataSEXP, SEXP mat_missSEXP, SEXP vec_marginSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type mat_data(mat_dataSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type mat_miss(mat_missSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type vec_margin(vec_marginSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_rank(mat_data, mat_miss, vec_margin));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_simup1_c_test", (DL_FUNC) &_simup1_c_test, 1},
+    {"_rankpts_c_test", (DL_FUNC) &_rankpts_c_test, 1},
+    {"_rankpts_c_two_arm_diff", (DL_FUNC) &_rankpts_c_two_arm_diff, 1},
+    {"_rankpts_c_mtp_single", (DL_FUNC) &_rankpts_c_mtp_single, 4},
+    {"_rankpts_c_mtp", (DL_FUNC) &_rankpts_c_mtp, 3},
+    {"_rankpts_c_mtp_step", (DL_FUNC) &_rankpts_c_mtp_step, 5},
+    {"_rankpts_c_rank", (DL_FUNC) &_rankpts_c_rank, 3},
     {NULL, NULL, 0}
 };
 
 void my_package_init(DllInfo *dll);
-RcppExport void R_init_simup1(DllInfo *dll) {
+RcppExport void R_init_rankpts(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
     my_package_init(dll);

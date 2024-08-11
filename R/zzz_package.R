@@ -1,9 +1,9 @@
-#' The 'simup1' package.
+#' The 'rankpts' package.
 #'
 #' @docType package
-#' @name    simup1-package
-#' @aliases simup1
-#' @useDynLib simup1, .registration = TRUE
+#' @name    rankpts-package
+#' @aliases rankpts
+#' @useDynLib rankpts, .registration = TRUE
 #'
 #' @import methods
 #' @import stats

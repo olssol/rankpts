@@ -2,6 +2,57 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 c_test <- function(test) {
-    .Call(`_simup1_c_test`, test)
+    .Call(`_rankpts_c_test`, test)
+}
+
+c_two_arm_diff <- function(dat) {
+    .Call(`_rankpts_c_two_arm_diff`, dat)
+}
+
+#' Multiple testing following the graph
+#'
+#'
+#' @param p_values  vector of p-values for the elementary hypothesis
+#' @param log       TRUE: print log at each step; FALSE: silent
+#'
+#' @inheritParams c_mtp
+#'
+#' @return Hypothesis rejection status indicator vector
+#'
+#' @export
+c_mtp_single <- function(p_values, alphas, mat_g, log = FALSE) {
+    .Call(`_rankpts_c_mtp_single`, p_values, alphas, mat_g, log)
+}
+
+#' Multiple testing following the graph
+#'
+#' @param alphas    vector of the original alphas
+#' @param mat_g     transition matrix G
+#'
+#' @param p_values  matrix of p-values for the elementary hypothesis
+#'
+#' @return Hypothesis rejection status indicator vector
+#'
+#' @export
+c_mtp <- function(p_values, alphas, mat_g) {
+    .Call(`_rankpts_c_mtp`, p_values, alphas, mat_g)
+}
+
+#' A single step in the multiple testing following the graph
+#'
+#'
+#'
+#' @return
+#'
+#' @export
+c_mtp_step <- function(mat_g, weights, h_ind, p_values, alpha) {
+    .Call(`_rankpts_c_mtp_step`, mat_g, weights, h_ind, p_values, alpha)
+}
+
+#' Rank patients
+#'
+#' @export
+c_rank <- function(mat_data, mat_miss, vec_margin) {
+    .Call(`_rankpts_c_rank`, mat_data, mat_miss, vec_margin)
 }
 
