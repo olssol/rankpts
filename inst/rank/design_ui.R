@@ -44,6 +44,19 @@ panel_rules <- list(
     )
 )
 
+panel_ranked <- list(
+    card(
+        card_header("Ranked Patients"),
+        DT::dataTableOutput("dtRanked")
+    ),
+
+    card(
+        card_header("Selected Patients"),
+        DT::dataTableOutput("dtRankedSel")
+    )
+)
+
+
 panel_results <- list(
     layout_sidebar(
         sidebar = sidebar(
@@ -71,9 +84,10 @@ tab_main <- function() {
             base_font  = font_google("Inter")
         ),
 
-        nav_panel(title = "Load Data",  !!!panel_data),
-        nav_panel(title = "Load Rules", !!!panel_rules),
-        nav_panel(title = "Results",    !!!panel_results)
+        nav_panel(title = "Load Data",   !!!panel_data),
+        nav_panel(title = "Load Rules",  !!!panel_rules),
+        nav_panel(title = "Ranked Data", !!!panel_ranked),
+        nav_panel(title = "Results",     !!!panel_results)
     )
 }
 
@@ -132,7 +146,6 @@ get_cur_var <- reactive({
 })
 
 get_rank_test <- reactive({
-
     pt_dta <- get_pt_data()
     req(pt_dta)
 
@@ -143,6 +156,26 @@ get_rank_test <- reactive({
     rpt_rank_test(pt_dta, rule_dta)
 })
 
+get_rank_test_data <- reactive({
+    rst <- get_rank_test()
+    req(rst)
+    rst$data
+})
+
+get_rank_test_data_selected <- reactive({
+    ranked_data <- get_rank_test_data()
+    req(ranked_data)
+
+    selected <- input$dtRanked_rows_selected
+    req(selected)
+
+    rule_dta <- get_rule_data()
+    req(rule_dta)
+
+    rpt_get_rank_data(ranked_data, rule_dta, selected)
+})
+
+
 get_rank_test_tbl <- reactive({
     rst <- get_rank_test()
     req(rst)
@@ -150,10 +183,10 @@ get_rank_test_tbl <- reactive({
 })
 
 get_rank_test_plot <- reactive({
-    rst <- get_rank_test()
+    rst <- get_rank_test_data()
     req(rst)
 
-    rpt_plot_hist(rst$data, vname = "rank", vlabel = "Rank")
+    rpt_plot_hist(rst, vname = "rank", vlabel = "Rank")
 })
 
 

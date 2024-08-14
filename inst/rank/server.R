@@ -21,7 +21,7 @@ shinyServer(function(input, output, session) {
                          options = list(pageLength = 100)
                          )
 
-    ##---------patient data-----------------
+    ##---------rank rules data--------------
     ##--------------------------------------
     output$dtRule <- DT::renderDataTable({
                              rule_data <- userLog$data_rule
@@ -49,22 +49,46 @@ shinyServer(function(input, output, session) {
                              info     = FALSE)
                          )
 
+    ##---------ranked data-----------------
+    ##--------------------------------------
+    output$dtRanked <- DT::renderDataTable({
+                               ranked <- get_rank_test_data()
+                               req(ranked)
+                               ranked
+                           },
+                           selection = 'multiple',
+                           options = list(pageLength = 100)
+                           )
+
+    output$dtRankedSel <- DT::renderDataTable({
+                                    data <- get_rank_test_data_selected()
+                                    req(data)
+                                    data
+                                },
+                                options  = list(
+                                    paging   = FALSE,
+                                    dom      = 't',
+                                    info     = FALSE)
+                                )
+
     ##---------result-----------------------
     ##--------------------------------------
-    observeEvent(userLog$data_rule, {
-        cur_sel <- input$inSelVar
-        vorder  <- order(userLog$data_rule$order)
-        vars    <- userLog$data_rule$variable[vorder]
-        labels  <- userLog$data_rule$label[vorder]
+    observeEvent(get_rule_data(), {
+        cur_sel  <- input$inSelVar
+        rule_dta <- get_rule_data()
+        req(rule_dta)
+
+        vars    <- rule_dta$variable
+        labels  <- rule_dta$label
 
         vars    <- c(vars, "rank")
         labels  <- c(labels, "RANK BASED ON ALL VARIABLES")
 
         names(vars) <- labels
         updateRadioButtons(session,
-                             "inSelVar",
-                             choices  = vars,
-                             selected = cur_sel)
+                           "inSelVar",
+                           choices  = vars,
+                           selected = cur_sel)
     })
 
     output$plt_obs <- renderPlot({

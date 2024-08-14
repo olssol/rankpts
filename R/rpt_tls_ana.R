@@ -30,8 +30,8 @@ rpt_ana_fisher <- function(dta, varm = "ARM", vtrt = "Treatment") {
 
     data.frame(
         Test      = "Fisher Exact",
-        Mean_Trt  = mean(d_trt$y),
-        Mean_Ctl  = mean(d_ctl$y),
+        Mean_Trt  = mean(d_trt$y, na.rm = TRUE),
+        Mean_Ctl  = mean(d_ctl$y, na.rm = TRUE),
         Conf_Low  = rst_test$conf.int[1],
         Conf_High = rst_test$conf.int[2],
         p_Value   = rst_test$p.value)
@@ -45,9 +45,9 @@ rpt_ana_fisher <- function(dta, varm = "ARM", vtrt = "Treatment") {
 rpt_plot_hist <- function(dta, vname, vlabel, varm = "ARM", ...) {
     ggplot(dta, aes_string(x = vname, fill = varm)) +
         geom_histogram(
-            aes(y = after_stat(density)),
+            aes(y    = after_stat(density)),
             position = "dodge",
-            color = "black",
+            color    = "black",
             ...) +
         geom_density(size = 1, alpha = 0.4) +
         labs(x = vlabel,
